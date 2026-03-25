@@ -1,5 +1,32 @@
 import { NextResponse } from 'next/server';
+export async function GET() {
+  return NextResponse.json({ 
+    status: "API 路径已连通！", 
+    tips: "请使用 POST 方法提交聊天数据。" 
+  });
+}
 
+// 这是你原本的 POST 函数（保持不变）
+export async function POST(req: Request) {
+  try {
+    const { messages } = await req.json();
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.AI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: messages,
+      }),
+    });
+    const data = await response.json();
+    return NextResponse.json(data.choices[0].message);
+  } catch (error) {
+    return NextResponse.json({ error: '服务器报错' }, { status: 500 });
+  }
+}
 export async function POST(req: Request) {
   try {
     const { messages } = await req.json();
