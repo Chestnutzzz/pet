@@ -2,7 +2,7 @@
 import { OpenAI } from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // 确保 Vercel 后台已配置此变量
+  apiKey: process.env.AI_API_KEY, // 确保 Vercel 后台已配置此变量
 });
 
 export async function POST(req: Request) {
