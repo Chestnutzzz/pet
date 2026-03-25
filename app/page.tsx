@@ -1,194 +1,156 @@
 'use client';
+import { useState } from 'react';
+import Image from 'next/image';
 
-import React, { useState } from 'react';
-import { 
-  MessageSquareDot, 
-  BookOpenText, 
-  ShoppingBag, 
-  HeartPulse, 
-  Sparkles, 
-  SendHorizontal,
-  Loader2 
-} from 'lucide-react';
+// 模拟数据：养宠必读卡片
+const MUST_READ_CARDS = [
+  { title: '幼猫喂养手册', desc: '刚接回家的猫咪怎么喂？' },
+  { title: '新手接猫避坑', desc: '打几针？什么时间打？' },
+];
 
-// 定义消息的结构，防止 TypeScript 报错
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-export default function PetCareApp() {
-  // 1. 状态管理
-  const [activeTab, setActiveTab] = useState('咨询');
+export default function Home() {
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([
+    { role: 'assistant', content: '你好！我是躺躺医生，您的专属宠物健康顾问。请问您的毛孩子今天有什么情况？' }
+  ]);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]); // 明确告诉它是消息数组
   const [isLoading, setIsLoading] = useState(false);
 
-  // 2. 发送逻辑
-  const handleSend = async () => {
+  const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
-
-    const userMsg: Message = { role: 'user', content: input };
-    const newMessages = [...messages, userMsg];
-    
-    setMessages(newMessages);
+    const userMessage = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/chat', {
+      // 这里的路径必须和你 GitHub 里的 api 路径一致
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: [...messages, userMessage] }),
       });
-
-      if (!res.ok) throw new Error('API 请求失败');
-
-      const botMsg: Message = await res.json();
-      setMessages((prev) => [...prev, botMsg]);
+      const data = await response.json();
+      if (data.content) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', content: '哎呀，诊断出了一点小问题，请稍后再试。' }]);
+      }
     } catch (error) {
-      console.error("对话出错了:", error);
-      // 如果出错，给用户一个友好的提示
-      setMessages((prev) => [...prev, { 
-        role: 'assistant', 
-        content: '哎呀，网络开小差了，请检查一下 API Key 设置或稍后再试。' 
-      }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: '网络似乎不太通畅，请检查网络连接。' }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 3. 静态数据
-  const navItems = [
-    { name: '咨询', icon: MessageSquareDot },
-    { name: '知识', icon: BookOpenText },
-    { name: '商城', icon: ShoppingBag },
-    { name: '健康', icon: HeartPulse },
-  ];
-
-  const knowledgeItems = [
-    { title: '幼猫喂养手册', desc: '刚领回家怎么喂？' },
-    { title: '新手疫苗避坑', desc: '打几针？什么时间打？' },
-    { title: '体内外驱虫常识', desc: '科学驱虫不伤宠。' },
-    { title: '猫咪行为读心术', desc: '它在想什么？' },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#FDF9F3] text-gray-800 pb-32">
-      {/* 头部 */}
-      <header className="sticky top-0 z-50 bg-[#FDF9F3]/90 backdrop-blur-sm px-6 py-5 flex justify-between items-center border-b border-orange-50">
-        <h1 className="text-2xl font-black text-orange-600 tracking-tight">
-          毛孩子<span className="text-gray-900">管家</span>
-        </h1>
-        <div className="w-10 h-10 border-2 border-orange-100 rounded-full flex items-center justify-center bg-white shadow-sm overflow-hidden">
-          <span className="text-xl">🐶</span>
-        </div>
-      </header>
-
-      <main className="px-4 py-6 max-w-lg mx-auto">
-        {/* 对话卡片 */}
-        <section className="bg-white/80 backdrop-blur-md rounded-3xl shadow-[0_8px_30px_rgb(254,235,214,0.3)] border border-orange-50 p-6 mb-8">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl flex items-center justify-center text-white">
-              <Sparkles size={24} className={isLoading ? "animate-spin" : ""} />
-            </div>
-            <div>
-              <p className="font-bold text-lg text-gray-950">AI 宠物助手</p>
-              <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-                实时在线
-              </div>
-            </div>
+    // 【修改点1】最外层容器：在电脑端(md:)增加内边距，使其不那么拥挤
+    <div className="min-h-screen bg-[#FDF8F3] p-4 md:p-8">
+      
+      {/* 【修改点2】内容整体容器：全宽，电脑端最大7xl，水平居中 */}
+      <div className="w-full max-w-7xl mx-auto space-y-6 md:space-y-10">
+        
+        {/* 顶部 Header */}
+        <header className="flex items-center justify-between pb-4 border-b border-orange-100">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-orange-600">毛孩子管家</span>
           </div>
+          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+            <span className="text-xl">🐶</span>
+          </div>
+        </header>
+
+        {/* 【修改点3】核心布局区域：手机上垂直排列，电脑上(md:)水平排列，左侧聊天，右侧卡片 */}
+        <div className="flex flex-col md:flex-row-reverse gap-6 md:gap-10">
           
-          {/* 聊天内容区 */}
-          <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-            {messages.length === 0 ? (
-              <div className="bg-orange-50/70 text-orange-950 rounded-2xl p-4 text-sm font-medium">
-                “你好！我是你的 AI 养宠专家。你的猫咪今天胃口怎么样？”
+          {/* 【修改点3-1】养宠必读卡片区：在电脑端移到右侧，作为侧边栏 */}
+          <aside className="md:w-1/3 space-y-4">
+            <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+              <span className="text-2xl">📖</span> 养宠必读
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-1 gap-4">
+              {MUST_READ_CARDS.map((card, index) => (
+                <div key={index} className="bg-white p-5 rounded-3xl border border-orange-50 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                  <h3 className="font-medium text-gray-900">{card.title}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{card.desc}</p>
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          {/* 【修改点3-2】主聊天区域：在电脑端占据左侧2/3空间 */}
+          <main className="flex-1 space-y-6">
+            
+            {/* 聊天卡片 */}
+            <div className="bg-white p-6 rounded-3xl border border-orange-50 shadow-sm flex flex-col gap-6">
+              <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+                <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-3xl">👨‍⚕️</div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">AI 宠物助手</h1>
+                  <p className="text-sm text-green-600 flex items-center gap-1.5">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                    </span>
+                    躺躺医生 实时在线
+                  </p>
+                </div>
               </div>
-            ) : (
-              messages.map((msg, idx) => (
-                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3.5 rounded-2xl text-sm ${
-                    msg.role === 'user' 
-                    ? 'bg-orange-500 text-white rounded-tr-none' 
-                    : 'bg-orange-50 text-orange-950 rounded-tl-none'
-                  }`}>
-                    {msg.content}
+
+              {/* 消息列表 */}
+              <div className="space-y-4 h-[400px] md:h-[500px] overflow-y-auto pr-2 scrollbar-thin">
+                {messages.map((msg, index) => (
+                  <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] p-4 rounded-2xl ${
+                      msg.role === 'user' 
+                        ? 'bg-orange-500 text-white rounded-br-none' 
+                        : 'bg-[#FDF8F3] text-gray-800 rounded-bl-none'
+                    }`}>
+                      {msg.content}
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-orange-50 p-3 rounded-2xl flex items-center gap-2">
-                  <Loader2 size={16} className="animate-spin text-orange-500" />
-                  <span className="text-xs text-orange-600">AI 正在思考...</span>
-                </div>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-[#FDF8F3] text-gray-500 p-4 rounded-2xl rounded-bl-none italic">
+                      躺躺医生正在输入...
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          
-          {/* 输入框 */}
-          <div className="relative">
-            <input 
-              type="text" 
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="问问 AI..." 
-              className="w-full bg-white border border-gray-100 rounded-full py-3.5 px-5 pr-12 outline-none focus:border-orange-300 shadow-sm text-sm"
-            />
-            <button 
-              onClick={handleSend}
-              disabled={isLoading}
-              className="absolute right-3 top-2.5 w-10 h-10 bg-orange-500 text-white rounded-full flex items-center justify-center transition hover:bg-orange-600 active:scale-95 disabled:bg-gray-300 shadow-md"
-            >
-              <SendHorizontal size={18} />
-            </button>
-          </div>
-        </section>
+            </div>
 
-        {/* 知识卡片区 */}
-        <section>
-          <h2 className="text-xl font-extrabold text-gray-950 mb-5 flex items-center gap-2.5">
-            <BookOpenText size={22} className="text-orange-500" /> 养宠必读
-          </h2>
-          <div className="grid grid-cols-2 gap-4">
-            {knowledgeItems.map((item, index) => (
-              <div key={index} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:border-orange-100 transition-all cursor-pointer">
-                <p className="text-base font-bold text-gray-900 mb-1">{item.title}</p>
-                <p className="text-xs text-gray-500 leading-snug">{item.desc}</p>
+            {/* 【修改点4】输入框：在电脑端也可以自动拉宽 */}
+            <div className="fixed bottom-0 left-0 right-0 md:relative md:bottom-auto bg-[#FDF8F3] md:bg-transparent p-4 md:p-0 border-t md:border-t-0 border-orange-100">
+              <div className="w-full max-w-xl md:max-w-none mx-auto flex items-center gap-2 bg-white p-2 rounded-full border border-orange-100 shadow-lg">
+                <input 
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.with)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  placeholder="问问 AI 宠物助手..."
+                  className="flex-1 bg-transparent px-4 py-2 text-gray-800 focus:outline-none"
+                  disabled={isLoading}
+                />
+                <button 
+                  onClick={sendMessage}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+                    input.trim() && !isLoading ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-200'
+                  }`}
+                  disabled={!input.trim() || isLoading}
+                >
+                  <span className="text-xl text-white">✈️</span>
+                </button>
               </div>
-            ))}
-          </div>
-        </section>
-      </main>
+            </div>
+            
+            {/* 为了移动端底部输入框留出的空白 */}
+            <div className="h-24 md:h-0"></div>
 
-      {/* 悬浮导航 */}
-      <footer className="fixed bottom-6 left-0 right-0 z-50 px-4 flex justify-center">
-        <nav className="w-full max-w-sm bg-white/90 backdrop-blur-lg rounded-full shadow-lg border border-gray-100 px-3 py-2.5 flex justify-between items-center">
-          {navItems.map((item) => {
-            const isActive = activeTab === item.name;
-            const Icon = item.icon;
-            return (
-              <button 
-                key={item.name}
-                onClick={() => setActiveTab(item.name)}
-                className={`relative flex items-center gap-2 px-4 py-2 rounded-full transition-all ${isActive ? 'text-white' : 'text-gray-600'}`}
-              >
-                {isActive && <span className="absolute inset-0 bg-orange-500 rounded-full shadow-md"></span>}
-                <Icon size={20} className="relative z-10" />
-                {isActive && <span className="relative z-10 text-sm font-bold">{item.name}</span>}
-              </button>
-            );
-          })}
-        </nav>
-      </footer>
+          </main>
+
+        </div>
+
+      </div>
     </div>
   );
 }
