@@ -17,10 +17,15 @@ export async function POST(req: Request) {
     const { messages } = await req.json();
 
     const completion = await openai.chat.completions.create({
-      messages: messages,
-      model: "deepseek-chat",
-    });
-
+  messages: [
+    { 
+      role: "system", 
+      content: "你是一位拥有20年经验的资深宠物医生，名字叫『毛孩子管家』。你语气温柔、专业且富有耐心。你会针对猫咪和狗狗的健康、饮食、日常护理提供专业建议。如果遇到紧急情况，你会提醒主人立即送医。请始终以宠物医生的身份回答，不要提及你是AI语言模型。" 
+    },
+    ...messages // 把用户之前的聊天记录拼在后面
+  ],
+  model: "deepseek-chat",
+});
     return NextResponse.json(completion.choices[0].message);
     
   } catch (error: any) {
