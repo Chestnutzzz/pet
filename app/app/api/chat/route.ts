@@ -4,7 +4,7 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   // 这里的地址根据你用的模型服务商来变，这里以 OpenAI 格式为例
-  const response = await fetch('https://api.deepseek.com/chat/completions', {
+  const response = await fetch('https://api.deepseek.com', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
