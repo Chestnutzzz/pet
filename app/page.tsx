@@ -8,10 +8,17 @@ export default function Home() {
 
   // AI 问诊状态
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([
-    { role: 'assistant', content: '您好，我是您的专属AI医生。请描述爱宠目前的健康状况（如品种、年龄、异常症状、食欲情况等），我将进行初步分析.' }
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  { 
+    role: 'assistant', 
+    content: '您好，我是 PetCare 资深健康顾问。为了更精准地分析伴侣动物的体况，请提供其品种、年龄及当前的异常表现。' 
+  }
+]);
+
+// 顶部 Header 修改
+<header className="bg-white px-6 py-4 flex items-center justify-between border-b border-orange-100 flex-shrink-0 z-10">
+  <span className="text-xl font-bold tracking-tight">Pet<span className="text-orange-600">Care</span> <span className="text-gray-400 font-medium">智能健康管家</span></span>
+  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center border border-orange-200">🩺</div>
+</header>
 
   // 咨询逻辑 (仅在 AI 问诊页使用)
   const sendMessage = async () => {
